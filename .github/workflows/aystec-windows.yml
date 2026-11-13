@@ -7,7 +7,11 @@
 #   - "Aystec: servidor y llave": en 1.5.3 el servidor y la llave son constantes fijas en
 #     libs/hbb_common/src/config.rs (las variables RENDEZVOUS_SERVER/RS_PUB_KEY ya no se
 #     leen al compilar). El paso las reemplaza y falla si no encuentra las originales.
-#   - "Aystec: verificar binario": falla si librustdesk.dll no trae el servidor de Aystec.
+#   - El mismo paso cambia APP_NAME a AystecRemoto (cliente con marca: servicio, carpeta,
+#     protocolo aystecremoto:// y textos de la interfaz; RustDesk lo trata como cliente
+#     personalizado y no busca actualizaciones propias).
+#   - "Aystec: verificar binario": falla si librustdesk.dll no trae servidor, llave y nombre.
+#   - Iconos y metadatos del exe ya vienen en la rama (ver commits "Aystec Remoto: marca").
 #
 # AGPL-3.0: este fork es publico (github.com/Chewv20/rustdesk).
 
@@ -26,6 +30,9 @@ env:
   VERSION: "1.5.3"
   AYSTEC_SERVIDOR: "aystec-remoto.ddns.net"
   AYSTEC_LLAVE: "tc41fObqbhAUSNWJget6kl6TDUiEfNpNR3RyS1tEKXc="
+  # Nombre interno: servicio de Windows, carpeta y exe en Program Files, protocolo
+  # aystecremoto:// y registro. Sin espacios (el protocolo seria invalido).
+  AYSTEC_APP: "AystecRemoto"
 
 jobs:
   generate-bridge:
@@ -57,10 +64,14 @@ jobs:
         with:
           submodules: recursive
 
-      - name: "Aystec: servidor y llave"
+      - name: "Aystec: servidor, llave y nombre"
         shell: bash
         run: |
           f=libs/hbb_common/src/config.rs
+          grep -qxF '    pub static ref APP_NAME: RwLock<String> = RwLock::new("RustDesk".to_owned());' "$f" \
+            || { echo "No se encontro APP_NAME original en $f"; exit 1; }
+          sed -i "s|^    pub static ref APP_NAME: RwLock<String> = RwLock::new(\"RustDesk\".to_owned());|    pub static ref APP_NAME: RwLock<String> = RwLock::new(\"${AYSTEC_APP}\".to_owned());|" "$f"
+          grep -qxF "    pub static ref APP_NAME: RwLock<String> = RwLock::new(\"${AYSTEC_APP}\".to_owned());" "$f" || { echo "El reemplazo de APP_NAME fallo"; exit 1; }
           grep -qx 'pub const RENDEZVOUS_SERVERS: &\[&str\] = &\["rs-ny.rustdesk.com"\];' "$f" \
             || { echo "No se encontro RENDEZVOUS_SERVERS original en $f"; exit 1; }
           grep -qx 'pub const RS_PUB_KEY: &str = "OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=";' "$f" \
@@ -183,7 +194,7 @@ jobs:
           if (-not $dll) { throw 'No se encontro librustdesk.dll' }
           $bytes = [IO.File]::ReadAllBytes($dll.FullName)
           $texto = [Text.Encoding]::ASCII.GetString($bytes)
-          foreach ($v in $env:AYSTEC_SERVIDOR, $env:AYSTEC_LLAVE) {
+          foreach ($v in $env:AYSTEC_SERVIDOR, $env:AYSTEC_LLAVE, $env:AYSTEC_APP) {
             if (-not $texto.Contains($v)) { throw "librustdesk.dll no contiene '$v'" }
           }
           if ($texto.Contains('OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=')) { Write-Warning 'librustdesk.dll tambien contiene la llave publica de RustDesk (revisar donde)' }
