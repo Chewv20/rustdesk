@@ -10,7 +10,7 @@
 #   - El mismo paso cambia APP_NAME a AystecRemoto (cliente con marca: servicio, carpeta,
 #     protocolo aystecremoto:// y textos de la interfaz; RustDesk lo trata como cliente
 #     personalizado y no busca actualizaciones propias).
-#   - "Aystec: verificar binario": falla si librustdesk.dll no trae servidor, llave y nombre.
+#   - "Aystec: verificar binario": falla si librustdesk.dll no trae el servidor y la llave.
 #   - Iconos y metadatos del exe ya vienen en la rama (ver commits "Aystec Remoto: marca").
 #
 # AGPL-3.0: este fork es publico (github.com/Chewv20/rustdesk).
@@ -194,7 +194,10 @@ jobs:
           if (-not $dll) { throw 'No se encontro librustdesk.dll' }
           $bytes = [IO.File]::ReadAllBytes($dll.FullName)
           $texto = [Text.Encoding]::ASCII.GetString($bytes)
-          foreach ($v in $env:AYSTEC_SERVIDOR, $env:AYSTEC_LLAVE, $env:AYSTEC_APP) {
+          # APP_NAME no se busca aqui: una cadena corta ("AystecRemoto".to_owned()) el
+          # compilador la convierte en valores inmediatos y no queda contigua en el binario.
+          # Su reemplazo ya se verifico en el codigo fuente ("Aystec: servidor, llave y nombre").
+          foreach ($v in $env:AYSTEC_SERVIDOR, $env:AYSTEC_LLAVE) {
             if (-not $texto.Contains($v)) { throw "librustdesk.dll no contiene '$v'" }
           }
           if ($texto.Contains('OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=')) { Write-Warning 'librustdesk.dll tambien contiene la llave publica de RustDesk (revisar donde)' }
