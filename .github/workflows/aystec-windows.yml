@@ -218,13 +218,21 @@ jobs:
           name: topmostwindow-artifacts-x64
           path: "./rustdesk"
 
+      - name: "Aystec: exe con el nombre de la app"
+        # install_me (src/platform/windows.rs) copia la carpeta tal cual y espera
+        # <APP_NAME>.exe; solo la actualizacion renombra. Igual que rdgen.
+        shell: bash
+        run: |
+          mv ./rustdesk/rustdesk.exe "./rustdesk/${AYSTEC_APP}.exe"
+          ls -l "./rustdesk/${AYSTEC_APP}.exe"
+
       - name: Build self-extracted executable
         shell: bash
         run: |
           sed -i '/dpiAware/d' res/manifest.xml
           pushd ./libs/portable
           pip3 install -r requirements.txt
-          python3 ./generate.py -f ../../rustdesk/ -o . -e ../../rustdesk/rustdesk.exe
+          python3 ./generate.py -f ../../rustdesk/ -o . -e "../../rustdesk/${AYSTEC_APP}.exe"
           popd
           mkdir -p ./SignOutput
           mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/aystec-remoto-${{ env.VERSION }}-x86_64.exe

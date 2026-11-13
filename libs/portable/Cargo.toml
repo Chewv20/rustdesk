@@ -29,6 +29,7 @@ native-windows-gui = {version = "1.0", default-features = false, features = ["an
 [package.metadata.winres]
 LegalCopyright = "Copyright © 2026 Aystec Solutions. Basado en RustDesk (AGPL-3.0)."
 ProductName = "Aystec Remoto"
+CompanyName = "Aystec Solutions"
 OriginalFilename = "AystecRemoto.exe"
 FileDescription = "Aystec Remoto"
 #ProductVersion = ""
